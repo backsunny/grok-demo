@@ -15,6 +15,14 @@ const ALLOWED_FILE_TYPES = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
 ];
 
+// 应用角色选项
+const APP_ROLES = [
+    { id: 'default', name: '通用助手' },
+    { id: 'lawyer', name: '律师助手' },
+    { id: 'doctor', name: '医疗助手' },
+    { id: 'programmer', name: '编程助手' },
+];
+
 /**
  * 输入表单组件（处理文本输入和文件上传）
  * @param {Object} props - 组件属性
@@ -24,6 +32,9 @@ const ALLOWED_FILE_TYPES = [
  * @param {FileList} props.files - 已上传的文件列表
  * @param {Function} props.setFiles - 更新文件列表的状态函数
  * @param {Function} props.handleRemoveFile - 移除文件的回调函数
+ * @param {string} props.selectedRole - 当前选择的应用角色
+ * @param {Function} props.setSelectedRole - 更新应用角色的状态函数
+ * @param {boolean} props.isConversationStarted - 是否已开始对话
  * @returns {JSX.Element} 输入表单界面
  */
 export default function InputForm({
@@ -32,12 +43,17 @@ export default function InputForm({
     handleSubmit,
     files,
     setFiles,
-    handleRemoveFile
+    handleRemoveFile,
+    selectedRole,
+    setSelectedRole,
+    isConversationStarted = false
 }) {
     const [showScrollbar, setShowScrollbar] = useState(false); // 控制输入框滚动条显示状态
     const textareaRef = useRef(null); // 输入框引用（用于调整高度）
     const fileInputRef = useRef(null); // 文件选择框引用
     const [fileError, setFileError] = useState(''); // 文件上传错误提示
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false); // 控制确认对话框显示状态
+    const [pendingRole, setPendingRole] = useState(null); // 待确认的角色
 
     // 调整输入框高度（根据内容自适应）
     const adjustTextareaHeight = () => {
@@ -73,6 +89,34 @@ export default function InputForm({
         setFileError(''); // 清除错误提示
     }
 
+    // 处理角色选择变化
+    const handleRoleChange = (e) => {
+        const newRole = e.target.value;
+        
+        // 如果已经开始对话，显示确认对话框
+        if (isConversationStarted) {
+            setPendingRole(newRole);
+            setShowConfirmDialog(true);
+        } else {
+            // 如果未开始对话，直接更新角色
+            setSelectedRole(newRole);
+        }
+    };
+
+    // 确认切换角色
+    const confirmRoleChange = () => {
+        setSelectedRole(pendingRole);
+        setShowConfirmDialog(false);
+        // 刷新页面
+        window.location.reload();
+    };
+
+    // 取消切换角色
+    const cancelRoleChange = () => {
+        setPendingRole(null);
+        setShowConfirmDialog(false);
+    };
+
     // 输入内容变化时调整输入框高度
     useEffect(() => {
         adjustTextareaHeight();
@@ -80,6 +124,33 @@ export default function InputForm({
 
     return (
         <div className={`bg-white rounded-lg shadow-lg p-4`}>
+            {/* 确认对话框 */}
+            {showConfirmDialog && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">提示</h3>
+                        <p className="text-gray-600 mb-6">无法在对话中切换角色，是否回到开始界面</p>
+                        <div className="flex justify-end gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={cancelRoleChange}
+                                className="px-4 py-2"
+                            >
+                                否
+                            </Button>
+                            <Button
+                                type="button"
+                                className="px-4 py-2 bg-black text-white"
+                                onClick={confirmRoleChange}
+                            >
+                                是
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <form onSubmit={event => {
                 handleSubmit(event, { experimental_attachments: files });
                 setFiles(undefined); // 提交后清空文件列表
@@ -113,11 +184,25 @@ export default function InputForm({
                         </Button>
                     </div>
                 )}
+                {/* 应用角色选择下拉框 */}
+                <div className="mb-4 width-200 inline-block ">
+                    <select
+                        value={selectedRole}
+                        onChange={handleRoleChange}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 hover:shadow-sm cursor-pointer"
+                    >
+                        {APP_ROLES.map(role => (
+                            <option key={role.id} value={role.id} >
+                                {role.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
                 <textarea
                     ref={textareaRef}
                     value={input}
                     onChange={handleInputChange}
-                    placeholder="输入您的问题... (Shift + Enter 换行)"
+                    placeholder="输入您的问题... "
                     className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[80px] max-h-[240px] ${showScrollbar ? 'overflow-y-auto' : 'overflow-y-hidden'} scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent mb-4`}
                 />
                 <div className="flex justify-between items-center">

@@ -1,5 +1,49 @@
 
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { marked } from 'marked'; 
+import { memo, useMemo } from 'react'; 
+
+/**
+ * 将Markdown内容解析为块
+ * @param {string} markdown - Markdown文本内容
+ * @returns {string[]} Markdown块数组
+ */
+function parseMarkdownIntoBlocks(markdown) { 
+  const tokens = marked.lexer(markdown); 
+  return tokens.map(token => token.raw); 
+} 
+
+/**
+ * 记忆化的Markdown块组件
+ */
+const MemoizedMarkdownBlock = memo( 
+  ({ content }) => { 
+    return <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>; 
+  }, 
+  (prevProps, nextProps) => { 
+    if (prevProps.content !== nextProps.content) return false; 
+    return true; 
+  }, 
+); 
+
+MemoizedMarkdownBlock.displayName = 'MemoizedMarkdownBlock'; 
+
+/**
+ * 记忆化的Markdown组件
+ */
+const MemoizedMarkdown = memo( 
+  ({ content, id }) => { 
+    const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]); 
+
+    return blocks.map((block, index) => ( 
+      <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} /> 
+    )); 
+  }, 
+); 
+
+MemoizedMarkdown.displayName = 'MemoizedMarkdown'; 
 
 /**
  * 消息列表组件（显示聊天消息及附件）
@@ -60,7 +104,13 @@ export default function MessageList({ messages, messagesEndRef }) {
                         {message.parts.map((part, i) => {
                             switch (part.type) {
                                 case 'text':
-                                    return <div key={i}>{part.text}</div>
+                                    return (
+                                        <div key={i} className="markdown-content">
+                                            <MemoizedMarkdown content={part.text} id={`${message.id}-part-${i}`} />
+                                        </div>
+                                    );
+                                default:
+                                    return <div key={i}>{part.text}</div>;
                             }
                         })}
                     </div>

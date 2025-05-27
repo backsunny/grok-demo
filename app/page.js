@@ -20,17 +20,25 @@ function Navbar() {
   );
 }
 
-
-
-
 export default function Home() {
   const scrollRef = useRef(null); // 用于监听滚动事件的容器引用
-  const { messages, input, handleInputChange, handleSubmit } = useChat(); // 使用聊天状态管理
+  const [selectedRole, setSelectedRole] = useState('default'); // 当前选择的应用角色
+  const { messages, input, handleInputChange, handleSubmit: originalHandleSubmit } = useChat(); // 使用聊天状态管理
   const [showScrollButton, setShowScrollButton] = useState(false); // 控制"返回底部"按钮的显示状态
   const messagesEndRef = useRef(null); // 消息列表底部的引用（用于滚动定位）
   const messagesContainerRef = useRef(null);
   const [files, setFiles] = useState(null); // 已上传的文件列表
+  const isConversationStarted = messages.length > 0; // 判断是否已开始对话
 
+  // 自定义提交处理函数，添加角色信息
+  const handleSubmit = (event, options) => {
+    event.preventDefault();
+    // 将角色信息添加到请求中
+    originalHandleSubmit(event, { 
+      ...options,
+      data: { role: selectedRole } 
+    });
+  };
 
   // 滚动到消息列表底部（新消息到达时触发）
   const scrollToBottom = () => {
@@ -85,6 +93,9 @@ export default function Home() {
               files={files}
               setFiles={setFiles}
               handleRemoveFile={handleRemoveFile}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
+              isConversationStarted={isConversationStarted}
             />
           </div>
         </div>
@@ -110,6 +121,9 @@ export default function Home() {
               files={files}
               setFiles={setFiles}
               handleRemoveFile={handleRemoveFile}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
+              isConversationStarted={isConversationStarted}
             />
           </div>
         </div>
