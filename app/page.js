@@ -52,6 +52,8 @@ export default function Home() {
 
   // 移除事件监听的清理函数
   useEffect(() => {
+    window.addEventListener("scroll", scorePOI, true);
+    scorePOI();
     return () => {
       window.removeEventListener("scroll", scorePOI, true);
     }
@@ -59,7 +61,7 @@ export default function Home() {
 
   // 监听滚动事件，判断是否显示"返回底部"按钮
   function scorePOI() {
-    if (window.innerHeight + window.scrollY + 10 <= scrollRef.current.scrollHeight) {
+    if (window.innerHeight + window.scrollY + 20 <= scrollRef.current.scrollHeight) {
       setShowScrollButton(true);
     } else {
       setShowScrollButton(false);
