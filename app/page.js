@@ -28,15 +28,16 @@ export default function Home() {
   const messagesEndRef = useRef(null); // 消息列表底部的引用（用于滚动定位）
   const messagesContainerRef = useRef(null);
   const [files, setFiles] = useState(null); // 已上传的文件列表
-  const isConversationStarted = messages.length > 0; // 判断是否已开始对话
 
   // 自定义提交处理函数，添加角色信息
   const handleSubmit = (event, options) => {
     event.preventDefault();
+    console.log("handleSubmit");
+    console.log("options: ", options);
     // 将角色信息添加到请求中
     originalHandleSubmit(event, { 
       ...options,
-      data: { role: selectedRole } 
+      data: { role: selectedRole} 
     });
   };
 
@@ -97,7 +98,7 @@ export default function Home() {
               handleRemoveFile={handleRemoveFile}
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
-              isConversationStarted={isConversationStarted}
+              isConversationStarted={true}
             />
           </div>
         </div>
@@ -125,7 +126,7 @@ export default function Home() {
               handleRemoveFile={handleRemoveFile}
               selectedRole={selectedRole}
               setSelectedRole={setSelectedRole}
-              isConversationStarted={isConversationStarted}
+              isConversationStarted={false}
             />
           </div>
         </div>
